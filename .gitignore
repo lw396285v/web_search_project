@@ -1,0 +1,6 @@
+*.db*
+*.pyc
+*.xml
+*.meta
+*.iml
+*.out
