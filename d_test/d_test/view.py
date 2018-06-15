@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from django.shortcuts import render
+from .search_engine.query_cn import Query_cn
 from .search_engine.query import Query
 import json
 import pymysql
@@ -17,9 +18,11 @@ def search(request):
     type = request.GET['type']
     key = request.GET['key']
     if language == "Chinese":
-        index = 'booksCN'
+        index = 'mysql'
+        query = Query_cn()
     elif language == "English":
         index = 'booksENG'
+        query = Query()
     else:
         return HttpResponse('internal error')
 
@@ -36,11 +39,10 @@ def search(request):
         return HttpResponse('internal error')
 
     q += ' ' + key
-    query = Query()
+
 
     print(q)
     result = query.query_sphinx(index, q)
-
     return HttpResponse(json.dumps(result))
 
 def read(request):
