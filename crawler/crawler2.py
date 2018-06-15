@@ -17,6 +17,7 @@ class BookKm(object):
         self.db_conn = None
         self.log_handle = None
         self.book_id = 0
+        self.preview = 3
 
     def init_log(self):
         self.log_handle = open('log.txt', 'w')
@@ -76,6 +77,9 @@ class BookKm(object):
     def make_book_url(self, bid):
         return self.url_base + '/chapterlist/' + str(bid) + '.html'
 
+    def make_abstract_url(self, bid):
+        return self.url_base + '/shuku/' + str(bid) + '.html'
+
     def get_page_num_and_class_name(self, url):
         reply = self.http.request('GET', url, self.headers)
         data = reply.data.decode('GBK')
@@ -120,7 +124,13 @@ class BookKm(object):
             cursor = self.db_conn.cursor()
         cursor.execute('SELECT * FROM BkBooks')
         book_list = cursor.fetchall()
+        checkpoint = 1388955
+        checked = False
         for book in book_list:
+            if not checked:
+                if book[0] == checkpoint:
+                    checked = True
+                continue
             bid = book[0]
             print('[Downloading book: %s]' % book[1])
             self.download_book(bid)
@@ -146,7 +156,7 @@ class BookKm(object):
             data = reply.data.decode('GBK')
             jq = PyQuery(data)
             chapter_list = jq('.mod_catalog')('li')
-            for cid in range(1, chapter_list.length + 1):
+            for cid in range(1, min(chapter_list.length + 1, 3)):
                 if chapter_list.eq(cid - 1).attr('class') is not None:
                     break
                 chapter = chapter_list.eq(cid - 1)('a').eq(0).attr('href')
@@ -156,8 +166,35 @@ class BookKm(object):
             self.default_content(bid)
             print('Failed')
 
+    def download_abstracts(self):
+        try:
+            cursor = self.db_conn.cursor()
+        except:
+            print('connect to database...')
+            self.db_conn = sqlite3.connect('bk.db')
+            cursor = self.db_conn.cursor()
+        cursor.execute('SELECT * FROM BkBooks')
+        book_list = cursor.fetchall()
+        for book in book_list:
+            bid = book[0]
+            print('[Downloading book: %s]' % book[1])
+            self.download_abstract(bid)
+
+    def download_abstract(self, bid):
+        try:
+            jq = PyQuery(self.make_abstract_url(bid))
+            abstract = jq('.desc').text()
+            with open('./abstract/' + str(bid) + '.txt', 'w') as f:
+                f.write(abstract)
+            print('Successful')
+        except:
+            with open('./abstract/' + str(bid) + '.txt', 'w') as f:
+                f.write('No reviews')
+            print('Failed')
+
 
 if __name__ == '__main__':
     crawler = BookKm()
     #crawler.run()
-    crawler.download_contents()
+    #crawler.download_contents()
+    crawler.download_abstracts()
