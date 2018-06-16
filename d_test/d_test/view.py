@@ -38,7 +38,7 @@ def search(request):
     elif type == "Content":
         q += 'PATH'
     elif type == "Fulltext":
-        q += ''
+        q = ''
     else:
         return HttpResponse('internal error')
 
