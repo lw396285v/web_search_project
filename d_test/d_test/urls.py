@@ -24,7 +24,8 @@ urlpatterns = [
     url(r'^$', RedirectView.as_view(url='/index/')),
     url(r'^index/$', view.main),
     url(r'^search/$', view.search),
-    url(r'^read/$', view.read)
+    url(r'^read/$', view.read),
+    url(r'^preview/$', view.preview)
 ]
 #urlpatterns = [
 #    path('admin/', admin.site.urls),

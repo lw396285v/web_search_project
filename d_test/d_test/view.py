@@ -20,9 +20,11 @@ def search(request):
     if language == "Chinese":
         index = 'mysql'
         query = Query_cn()
+        pre_path = '/home/liwen/Dataset/abstract-cn'
     elif language == "English":
         index = 'booksENG'
         query = Query()
+        pre_path = '/home/liwen/Dataset/abstract-eng'
     else:
         return HttpResponse('internal error')
 
@@ -33,16 +35,20 @@ def search(request):
         q += 'AUTHOR'
     elif type == "Feature":
         q += 'FEATURE'
-    elif type == "Fulltext":
+    elif type == "Content":
         q += 'PATH'
+    elif type == "Fulltext":
+        q += ''
     else:
         return HttpResponse('internal error')
 
     q += ' ' + key
-
-
     print(q)
     result = query.query_sphinx(index, q)
+
+    result['lang'] = language
+
+
     return HttpResponse(json.dumps(result))
 
 def read(request):
@@ -57,6 +63,7 @@ def read(request):
         path = '/home/liwen/Dataset/books-cn/'
         cursor.execute("select title, author from books_cn where id=%s", [str(bid)])
     res = cursor.fetchall()
+    print(res)
     title = res[0][0]
     author = res[0][1]
     with open(path + str(bid) + '.txt', 'r') as fh:
@@ -64,3 +71,19 @@ def read(request):
     print(language, bid, title)
     db_conn.close()
     return render(request, 'read.html', {'content': content, 'title': title, 'author': author})
+
+def preview(request):
+    language = request.GET['lang']
+    bid = request.GET['bid']
+    pre_path = ''
+    if language == "Chinese":
+        pre_path = '/home/liwen/Dataset/abstract-cn/'
+    elif language == "English":
+        pre_path = '/home/liwen/Dataset/abstract-eng/'
+    pre_content = ''
+    try:
+        with open(pre_path + str(bid) + '.txt') as fh:
+            pre_content = fh.read()
+    except:
+        pre_content = 'No review'
+    return HttpResponse(json.dumps({'pre': pre_content}))

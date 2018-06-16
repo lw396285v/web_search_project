@@ -18,6 +18,10 @@
             padding: 40px 15px;
             text-align: center;
         }
+        .table th, .table td {
+            text-align: center;
+            vertical-align: middle!important;
+        }
     </style>
   </head>
 
@@ -64,6 +68,7 @@
                     <li><a href="#" class="type">Title</a></li>
                     <li><a href="#" class="type">Author</a></li>
                     <li><a href="#" class="type">Feature</a></li>
+                    <li><a href="#" class="type">Content</a></li>
                     <li><a href="#" class="type">Fulltext</a></li>
                 </ul>
                 </div>
@@ -106,10 +111,9 @@
                 </div>
         </div>
       </div>
-
     </div><!-- /.container -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script type='text/javascript'>
 
     $(function () {
@@ -137,15 +141,36 @@
         $('#time-tag').text(time + ' sec');
         $('#count-tag').text(count);
         var matches = result["matches"];
+        var lang = result["lang"];
         for(var i=0;i<matches.length;i++){
             var match = matches[i];
             var author = match["attrs"]["author"];
             var title = match["attrs"]["title"];
             var bid = match["attrs"]["id"];
-            var row = "<tr><th scope='row'>" + String(i+1)+ "</th><td>" + author + "</td><td><a href='/read?lang=" +
-                $("#lang-btn").text() + "&bid=" + String(bid) + "'>" + title + "</a></td><tr>";
+            var row = "<tr><th scope='row'>" + String(i+1)+ "</th><td>" + author + "</td><td><a "
+                + "title='简介或评价' data-container='body' data-toggle='popover' data-placement='top' "
+                + " data-trigger='hover' bid=" + String(bid) + " lang=" + lang + " href='/read?lang=" + $("#lang-btn").text()
+                + "&bid=" + String(bid) + "'>" + title + "</a></td><tr>";
             $("#res-table").append(row);
         }
+　　　　  $("[data-toggle='popover']").popover(
+            {
+                html: true,
+                content: function () {
+                    var pop_content;
+                    $.ajax({
+                        url: "/preview",
+                        type: "GET",
+                        async: false,
+                        data: {"lang":$(this).attr('lang'),"bid":$(this).attr('bid')},
+                        success: function (data1) {
+                            pop_content = JSON.parse(data1);
+                        }
+                    });
+                    return pop_content['pre']
+                }
+            }
+        );
     }
     function search(){
         if($.trim($("#key-words").val()) == ""){
@@ -162,6 +187,10 @@
             }
         });
         }
+    }
+    function content(bid) {
+        return bid.innerHTML
+
     }
     </script>
   </body>
